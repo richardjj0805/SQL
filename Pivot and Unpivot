@@ -1,0 +1,16 @@
+ with TotalTerritorySales2 (Territory2,Sales2)
+
+ AS
+ (
+ SELECT Territory,Sum(sales)
+ FROM TerritorySales
+ group by Territory
+ )
+  
+  
+ select 'Sales' as TotalTerritorySales,[QLD],[NSW],[TAS] FROM
+ (SELECT Territory2,Sales2 FROM TotalTerritorySales2) AS SourceTable
+ pivot (
+ sum(Sales2) for Territory2 in
+ ([QLD],[NSW],[TAS])
+ ) AS PIVOTTable
