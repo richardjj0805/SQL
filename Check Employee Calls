@@ -1,0 +1,37 @@
+
+
+-- calls in raw
+select * from raw_act_calls where employeeID ='23957' AND TERRITORYid ='36712' and division ='ph' and callStatus='Submitted' and interactionSubType in (
+'Event - Detail', 'Sales Call - Desk', 'Sales Call - Sit Down') and 
+customerid in(
+
+select customer_code from dim_act_customer where customertype_key in (
+select customertype_key from dim_act_customertype where customertype_name in(
+'Accident and Emergency', 'Advanced Trainee', 'Cardiology', 'Consultant Physician', 'Electrophysiologists',
+ 'Geriatrics', 'Haematology', 'Hospital Pharmacist', 'Nephrology', 'Neurology', 'Registrar', 'Rehabilitation', 'Vascular Surgery'
+ ))) and interactionDateLocal like'2018-07%'
+ 
+ 
+ -- calls in Stg
+ SELECT     *
+FROM            dbo.stg_act_calls A
+
+INNER JOIN	dim_act_customer C ON A.customer_code = C.customer_code
+					INNER JOIN	dim_act_customertype D ON C.customertype_key = D.customertype_key
+					-- Location
+					INNER JOIN	dim_act_location E ON A.location_code = E.location_code
+					INNER JOIN	dim_act_locationtype F ON E.locationtype_key = F.locationtype_key
+
+						INNER JOIN	dim_act_employee G ON A.employee_code = G.employee_code
+					INNER JOIN	rel_act_employee_role H ON G.employee_key = H.employee_key AND A.call_datetime BETWEEN H.employeerole_startdate AND ISNULL(H.employeerole_enddate, '2050-01-01')
+					INNER JOIN	dim_act_role I ON H.role_key = I.role_key AND I.team_key = '10'
+				
+WHERE        (A.team_name = 'GM - Xarelto HSR TTS') AND (A.period_name = '2018-07') AND (A.calltype_name IN ('Event - Detail', 'Sales Call - Desk', 'Sales Call - Sit Down')) AND 
+                         (A.employee_code = '23957') AND (A.role_code = '590') AND (A.product_code = 'any') AND (A.location_code IS NOT NULL) AND (A.customer_code IN
+                             (SELECT DISTINCT customer_code
+                               FROM            dbo.dim_act_customer AS B
+                               WHERE        (customertype_key IN
+                                                             (SELECT        customertype_key
+                                                               FROM            dbo.dim_act_customertype
+                                                               WHERE        (customertype_code IN ('AG2', 'AG713', 'AG12', 'AG17', 'AG726', 'AG31', 'AG33', 'AG36', 'AG45', 'AG46', 'AG763', 'AG79', 'AG769'))))))
+
