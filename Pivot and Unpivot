@@ -1,4 +1,6 @@
- with TotalTerritorySales2 (Territory2,Sales2)
+ --Pivot Table
+ 
+ with TotalTerritorySales (Territory,Sales)
 
  AS
  (
@@ -9,8 +11,20 @@
   
   
  select 'Sales' as TotalTerritorySales,[QLD],[NSW],[TAS] FROM
- (SELECT Territory2,Sales2 FROM TotalTerritorySales2) AS SourceTable
+ (SELECT Territory,Sales FROM TotalTerritorySales) AS SourceTable
  pivot (
- sum(Sales2) for Territory2 in
+ sum(Sales) for Territory in
  ([QLD],[NSW],[TAS])
  ) AS PIVOTTable
+
+--Unpivot Table
+ Create table #Marks(Names varchar(255),Science int,English int)
+ insert into #Marks Values('Shijian',100,200),('Boris',100,200)
+ select * from #Marks
+
+ Select u.Names,u.[subject],u.marks FROM
+ #Marks
+ UNPIVOT
+ (
+ marks FOR [subject] IN (Science,English)
+ ) u
