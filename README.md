@@ -1,4 +1,4 @@
-# SQL
+# SQL lEARNING
 --SQL:row_number(),MIN/AVG/MAX/Parition by
 
 select A.employee_code,B.EMPLOYEE_NAME, A.team_name,A.period_name,number_of_days,
