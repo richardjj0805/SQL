@@ -1,19 +1,18 @@
-
 -------------------------------------------
---Create the Excel files
+Check File and Move to a new Location
 -------------------------------------------
 
 CREATE TABLE #flg (line varchar(255))
 INSERT INTO #flg (line)
-EXEC master..xp_cmdshell 'dir /b  \\SYDSMFTNAS01\MiPortal\2_FTPROOT\Bayer\Inbox\BayerAU\BayerPH_Metadata'
+EXEC master..xp_cmdshell 'dir /b  \\SYDSMFTNAS01\MIPORTAL\1_MIPORTAL_DATA\BAYERPHARMA_AU\1_RECEIVED'
 
 declare @cmdline varchar(2000)
 
-IF Exists (SELECT * FROM #flg WHERE line LIKE 'AU_PH_Territory_Alignment_Cortex_Extract_%.xlsx')
+IF Exists (SELECT * FROM #flg WHERE line LIKE 'Bayer Pharma - Development and Support Task Status_%.xlsx')
 BEGIN
 Print 'Moving File'
-set @cmdline ='MOVE /Y "\\SYDSMFTNAS01\MiPortal\2_FTPROOT\Bayer\Inbox\BayerAU\BayerPH_Metadata\AU_PH_Territory_Alignment_Cortex_Extract_*.xlsx" "\\SYDSMFTNAS01\MiPortal\1_MIPORTAL_DATA\BAYERPHARMA_AU\1_RECEIVED"'
-
+set @cmdline ='MOVE /Y "\\SYDSMFTNAS01\MIPORTAL\1_MIPORTAL_DATA\BAYERPHARMA_AU\1_RECEIVED\Bayer Pharma - Development and Support Task Status_*.xlsx" "\\SYDSMFTNAS01\MIPORTAL\1_MIPORTAL_DATA\BAYERPHARMA_AU\WeeklyTask_List"'
+EXECUTE master..xp_cmdshell @cmdline
 
 END
 ELSE
@@ -21,9 +20,12 @@ BEGIN
 	RAISERROR('No new files to load', 11, 1)
 END
 
+
 -------------------------------------------
---Move data to a TEMP Table
+Dump Data into a EXCEL File
 -------------------------------------------
+
+--Create a TEMP Table with some data
 
 SELECT * INTO #TEST123 from (
 select A.employee_code,B.EMPLOYEE_NAME, A.team_name,A.period_name,number_of_days,
@@ -52,9 +54,6 @@ DECLARE @print varchar (500)
 DECLARE @output_sub_folder varchar(500)
 DECLARE	@filedate varchar(20)
 
--------------------------------------------
---Create the Excel files
--------------------------------------------
 --This is DEstination folder name
 SELECT @dest_folder = 'Extract' 
 
@@ -77,12 +76,10 @@ EXECUTE master..xp_cmdshell @Cmd, no_output
 
 SELECT @template_folder, @output_path
 
--------------------------------------------
---Export Data from TEMP Table to Excel
--------------------------------------------
 
 SET @file_name = @output_path 
 
+--Move data to a EXCEL File
 SELECT @sql =  ('INSERT INTO OPENROWSET(''Microsoft.ACE.OLEDB.12.0'', 
 				 ''Excel 8.0;Database=' + @file_name + ';'', 
 				 ''SELECT * FROM [sheet1$]'') 
@@ -90,3 +87,77 @@ SELECT @sql =  ('INSERT INTO OPENROWSET(''Microsoft.ACE.OLEDB.12.0'',
 					FROM  #TEST123')
 PRINT(@sql)			
 EXECUTE (@sql)
+
+----------------------------------------------------------------
+-- Load Excel  File
+----------------------------------------------------------------
+DECLARE @Msg varchar(100)
+DECLARE @SQL varchar(8000)
+DECLARE @table_name varchar(100)
+DECLARE @src_table_name varchar(100)
+DECLARE @metadata_file varchar(255)
+SELECT @Msg = Convert(varchar, GetDate(), 113) + ' - Load Excel Metadata File' 
+RAISERROR(@Msg, 0, 1) WITH NOWAIT
+
+SELECT @metadata_File = '\\SYDSMFTNAS01\MIPORTAL\1_MIPORTAL_DATA\BAYERPHARMA_AU\1_RECEIVED\Bayer Pharma - Development and Support Task Status_20180904.xlsx'
+
+-- Create initial connection to Excel metadata
+IF EXISTS(SELECT * FROM master.dbo.sysservers WHERE srvname = 'BAYERPHARMA_AU_Testing')
+BEGIN
+	EXECUTE sp_droplinkedsrvlogin 'BAYERPHARMA_AU_Testing',NULL
+	EXECUTE sp_dropserver 'BAYERPHARMA_AU_Testing'
+END
+
+
+EXECUTE sp_addlinkedserver
+'BAYERPHARMA_AU_Testing','EXCEL','Microsoft.ACE.OLEDB.12.0',@metadata_File,NULL,'Excel 12.0'
+
+IF OBJECT_ID('raw_linked_tables') IS NOT NULL EXECUTE('DROP TABLE raw_linked_tables')
+
+CREATE TABLE raw_linked_tables
+(
+      table_cat varchar(8000),
+      table_schem varchar(8000),
+      table_name varchar(8000),
+      table_type varchar(8000),
+      remarks    varchar(8000)
+)
+
+EXEC master.dbo.sp_addlinkedsrvlogin	@rmtsrvname = N'BAYERPHARMA_AU_Testing',
+										@useself = N'false',
+										@rmtuser=NULL,
+										@rmtpassword= NULL
+
+INSERT INTO raw_linked_tables
+EXECUTE sp_tables_ex 'BAYERPHARMA_AU_Testing'
+
+DECLARE cSheets CURSOR FOR
+	SELECT table_name
+	FROM raw_linked_tables
+OPEN cSheets
+FETCH cSheets INTO @src_table_name
+WHILE @@FETCH_STATUS = 0
+BEGIN
+      SELECT @table_name = '' + REPLACE(REPLACE(@src_table_name, ' ', ''), '$', '')
+      
+      IF OBJECT_ID('' +'[raw_all_Bayer_' + @table_name + ']') IS NOT NULL EXECUTE('DROP TABLE ' + '[raw_all_metadata_' + @table_name + ']')
+      
+      SELECT	@SQL = 'SELECT * INTO [raw_all_Bayer_' + @table_name + '] FROM BAYERPHARMA_AU_Testing...' + '[' + @src_table_name + ']'
+      EXECUTE	(@SQL)
+
+	  PRINT (@SQL)
+      
+      FETCH cSheets INTO @src_table_name
+END
+CLOSE cSheets
+DEALLOCATE cSheets
+
+-- Clean up connections to the Excel metadata
+IF EXISTS(SELECT * FROM master.dbo.sysservers WHERE srvname = 'BAYERPHARMA_AU_Testing')
+BEGIN
+	EXECUTE sp_droplinkedsrvlogin 'BAYERPHARMA_AU_Testing',NULL
+	EXECUTE sp_dropserver 'BAYERPHARMA_AU_Testing'
+END
+
+-- Check the data in the new table
+SELECT * FROM [raw_all_Bayer_BAYERPHARMA_AU_Testing]
