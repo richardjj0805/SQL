@@ -1,0 +1,27 @@
+DECLARE @recipientlist  varchar(1000) =  'Shijian.He@au.imshealth.com;DKatta@in.imshealth.com'
+--Recipient List is semi-colon delimited. You can load as many in there as you like.
+
+
+DECLARE @Msg            varchar(1000)
+
+DECLARE @tableHTML      varchar(1000)
+
+
+SET @tableHTML = 
+				'Bayer Pharma + Consumer (AU) Wholesaler load is ready for review in UAT. <br>
+				 Please check that data for the latest period is available in both Pharma and Consumer Portals (MiWholesaler module). <br>
+				 If it looks correct, you can push the data to Live server by running the following code: <br>
+				 <br>
+				 EXECUTE tools..mip_export_data_for_sqlserver <br>
+				  @source_database = ''' + @client_db + '''<br>
+				 ,@dest_database = ''' + @client_db_dbo + '''<br>
+				 ,@schedule_name = ''WHS'' <br>
+				 ,@immediate_load = ''' + @prod_Server + '''<br>'
+
+				EXEC msdb.dbo.sp_send_dbmail 
+				 @profile_name = 'MiPortal Production Support'
+				,@recipients= @recipientlist
+				,@subject = 'Bayer Wholesaler load has run to completion'
+				,@body_format = 'HTML'
+				,@body = @tableHTML;
+
