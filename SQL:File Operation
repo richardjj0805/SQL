@@ -1,0 +1,92 @@
+
+-------------------------------------------
+--Create the Excel files
+-------------------------------------------
+
+CREATE TABLE #flg (line varchar(255))
+INSERT INTO #flg (line)
+EXEC master..xp_cmdshell 'dir /b  \\SYDSMFTNAS01\MiPortal\2_FTPROOT\Bayer\Inbox\BayerAU\BayerPH_Metadata'
+
+declare @cmdline varchar(2000)
+
+IF Exists (SELECT * FROM #flg WHERE line LIKE 'AU_PH_Territory_Alignment_Cortex_Extract_%.xlsx')
+BEGIN
+Print 'Moving File'
+set @cmdline ='MOVE /Y "\\SYDSMFTNAS01\MiPortal\2_FTPROOT\Bayer\Inbox\BayerAU\BayerPH_Metadata\AU_PH_Territory_Alignment_Cortex_Extract_*.xlsx" "\\SYDSMFTNAS01\MiPortal\1_MIPORTAL_DATA\BAYERPHARMA_AU\1_RECEIVED"'
+
+
+END
+ELSE
+BEGIN
+	RAISERROR('No new files to load', 11, 1)
+END
+
+-------------------------------------------
+--Move data to a TEMP Table
+-------------------------------------------
+
+SELECT * INTO #TEST123 from (
+select A.employee_code,B.EMPLOYEE_NAME, A.team_name,A.period_name,number_of_days,
+MAX(A.number_of_days) over (partition by A.team_name,A.period_name ) as MaxNumberOfDays ,
+AVG(A.number_of_days) over (partition by A.team_name,A.period_name ) as AVGNumberOfDays ,
+MIN(A.number_of_days) over (partition by A.team_name,A.period_name) as MINNumberOfDays ,
+ROW_NUMBER() over (partition by A.team_name,A.Period_name order by A.NUMBER_OF_DAYS DESC ) as  rankingFromTop 
+from (
+select employee_code,period_name,team_name, sum(number_of_days) as number_of_days from stg_act_days
+where daytype_name <> 'Field Day' 
+group by 
+employee_code,period_name,team_name
+)  A inner join dim_act_employee B
+ON a.employee_code=B.employee_code
+) a
+
+DECLARE @date varchar(25)
+DECLARE @file_name varchar(255)
+DECLARE @sql varchar(8000)
+DECLARE @data_file varchar(100)
+DECLARE @output_path_with_sub varchar(500)
+DECLARE @dest_folder varchar (500)
+DECLARE @template_folder varchar (500)
+DECLARE @output_path varchar (500)
+DECLARE @print varchar (500)
+DECLARE @output_sub_folder varchar(500)
+DECLARE	@filedate varchar(20)
+
+-------------------------------------------
+--Create the Excel files
+-------------------------------------------
+--This is DEstination folder name
+SELECT @dest_folder = 'Extract' 
+
+--Diretory or path for the DEstination folder
+--SELECT @output_path = '\\SQLDev1\mercurialshare\1_MiPORTAL_DATA\SEQIRUS\13_DELIVERABLES\MiperformanceCAPExtract\Extract\'
+SELECT @output_path = '\\SYDSMFTNAS01\MIPORTAL\1_MiPORTAL_DATA\BAYERPHARMA_AU\Extract\'
+
+--Template folder where the structrue for the output file is stored.
+--SELECT @template_folder = '\\SQLDev1\mercurialshare\1_MiPORTAL_DATA\SEQIRUS\13_DELIVERABLES\MiperformanceCAPExtract\Templates\CAP_Incentives.xlsx'
+SELECT @template_folder = '\\SYDSMFTNAS01\MIPORTAL\1_MiPORTAL_DATA\BAYERPHARMA_AU\WeeklyTask_List\Bayer Analysis.xlsx'
+
+SELECT @output_path = @output_path +  'Bayer Analysis_' +  (Replace(Convert(varchar, GETDATE(), 112), '-', '')) + '.xlsx'
+PRINT @output_path
+
+--Copy the Template files from the Template folder to the Extract Folder
+DECLARE @cmd varchar (500)
+SET @Cmd = 'COPY "' + @template_folder + '" "'+ @output_path + '"' 
+PRINT @Cmd
+EXECUTE master..xp_cmdshell @Cmd, no_output 
+
+SELECT @template_folder, @output_path
+
+-------------------------------------------
+--Export Data from TEMP Table to Excel
+-------------------------------------------
+
+SET @file_name = @output_path 
+
+SELECT @sql =  ('INSERT INTO OPENROWSET(''Microsoft.ACE.OLEDB.12.0'', 
+				 ''Excel 8.0;Database=' + @file_name + ';'', 
+				 ''SELECT * FROM [sheet1$]'') 
+				  SELECT [employee_code]	,[EMPLOYEE_NAME],	[team_name],[period_name],	[number_of_days],	[MaxNumberOfDays],	[AVGNumberOfDays],	[MINNumberOfDays],	[rankingFromTop]
+					FROM  #TEST123')
+PRINT(@sql)			
+EXECUTE (@sql)
