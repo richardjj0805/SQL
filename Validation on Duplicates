@@ -1,0 +1,51 @@
+--GEOGRAPHY_CODE only has 1 Description/Team_name/Alignment_NAME and SRA
+WITH Q1  as (
+	select GEOGRAPHY_CODE,
+		   [DESCRIPTION],
+		   [TEAM_NAME],
+		   [ALIGNMENT_NAME],
+		   [SRA],
+		   [Veeva Territory Code]
+
+		   FROM  [raw_all_metadata_AUGastroUC]
+		   GROUP BY  GEOGRAPHY_CODE,
+		   [DESCRIPTION],
+		   [TEAM_NAME],
+		   [ALIGNMENT_NAME],
+		   [SRA],
+		   [Veeva Territory Code]
+			),
+			
+			 Q2  as (
+	select GEOGRAPHY_CODE,
+		   [DESCRIPTION],
+		   [TEAM_NAME],
+		   [ALIGNMENT_NAME],
+		   [SRA],
+		   [Veeva Territory Code]
+		   ,
+		   row_number() over (partition by GEOGRAPHY_CODE order by [DESCRIPTION] ) AS RN
+		    from q1
+			)
+			select 
+			* FROM Q2
+      
+      --Alignment Name should only has 1 Terr Code
+WITH Q1  as (
+	select 
+		   [ALIGNMENT_NAME],
+		   [Veeva Territory Code]
+		   FROM  [raw_all_metadata_AUGastroUC]
+		   GROUP BY  
+		   [ALIGNMENT_NAME],
+		   [Veeva Territory Code]
+			),
+				
+			 Q2  as (
+	select Alignment_name,
+		   [Veeva Territory Code],
+		   row_number() over (partition by Alignment_name order by [Veeva Territory Code] ) AS RN
+		    from q1
+			)
+			select 
+			* FROM Q2
