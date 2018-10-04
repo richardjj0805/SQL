@@ -1,0 +1,3 @@
+SELECT * FROM INFORMATION_SCHEMA.COLUMNS  
+SELECT * FROM master.dbo.sysservers
+select * from sys.tables
