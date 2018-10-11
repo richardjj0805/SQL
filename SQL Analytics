@@ -33,4 +33,51 @@ DENSE_RANK() OVER (PARTITION BY client_id order by actual_eta-predicted_eta) as 
 row_number() OVER (PARTITION BY client_id order by actual_eta-predicted_eta) as RowNumber
 from #Temp1
 
+# PERCENTILE_DISC vs PERCENTILE_CONT VS MIN/MAX/AVG
 
+create table #test (
+    EmplId INT PRIMARY KEY CLUSTERED,
+    DeptId INT,
+    Salary NUMERIC(8,2));
+
+INSERT INTO #test
+VALUES (1, 1, 10000),
+       (2, 1, 11000),
+       (3, 1, 12000),
+       (4, 2, 25000),
+       (5, 2, 35000),
+       (6, 2, 100000),
+       (7, 2, 100000);
+ 
+SELECT EmplId,
+       DeptId,
+       Salary,
+       PctC1 = PERCENTILE_CONT(0.5)
+               WITHIN GROUP (ORDER BY Salary ASC)
+               OVER (PARTITION BY DeptId),
+       PctD1 = PERCENTILE_DISC(0.5)
+               WITHIN GROUP (ORDER BY Salary ASC)
+               OVER (PARTITION BY DeptId),
+       CD1   = CUME_DIST()
+               OVER (PARTITION BY DeptId
+                         ORDER BY Salary),
+	   MAX1 = Max(Salary)
+               OVER (PARTITION BY DeptId),
+	   Min1 = Min(Salary)
+               OVER (PARTITION BY DeptId),
+       AVG1  = AVG(Salary)
+               OVER (PARTITION BY DeptId),
+       PctC2 = PERCENTILE_CONT(0.5)
+               WITHIN GROUP (ORDER BY Salary ASC)
+               OVER (),
+       PctD2 = PERCENTILE_DISC(0.5)
+               WITHIN GROUP (ORDER BY Salary ASC)
+               OVER (),
+       CD2   = CUME_DIST()
+               OVER (ORDER BY Salary ASC),
+       AVG2  = AVG(Salary)
+               OVER (ORDER BY Salary
+                      ROWS BETWEEN UNBOUNDED PRECEDING
+                               AND UNBOUNDED FOLLOWING)
+  FROM #test
+ ORDER BY DeptId, EmplId;
