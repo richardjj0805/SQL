@@ -47,6 +47,10 @@ CUME_DIST: calculates the cumulative distribution of a value within a group of v
 Assuming ascending ordering, the CUME_DIST of a value in row r is defined as the number
 of rows with values less than or equal to that value in row r, divided by the number 
 of rows evaluated in the partition or query result set. CUME_DIST is similar to the PERCENT_RANK function.
+1>=CUME_DIST>0
+
+PERCENT_RANK():Calculates the relative rank of a row within a group of rows
+1>=CUME_DIST>=0
 */
 
 /** 
