@@ -41,11 +41,18 @@ greater than or equal to the specified percentile value. For the PERCENTILE_CONT
 the value returned may or may not exist in the column being analyzed; for the PERCENTILE_DISC 
 function the value returned will belong to one of the rows in the partition.
 */
+
 /**
 CUME_DIST: calculates the cumulative distribution of a value within a group of values.
 Assuming ascending ordering, the CUME_DIST of a value in row r is defined as the number
 of rows with values less than or equal to that value in row r, divided by the number 
 of rows evaluated in the partition or query result set. CUME_DIST is similar to the PERCENT_RANK function.
+*/
+
+/** 
+LAG provides access to a row at a given physical offset that comes before the current row
+LEAD provides access to a row at a given physical offset that follows the current row
+Accesses data from a subsequent row in the same result set without the use of a self-join starting 
 */
 create table #test (
     EmplId INT PRIMARY KEY CLUSTERED,
