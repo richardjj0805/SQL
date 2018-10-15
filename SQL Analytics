@@ -76,20 +76,30 @@ SELECT EmplId,
        DeptId,
        Salary,
        PctC1 = PERCENTILE_CONT(0.5)
-               WITHIN GROUP (ORDER BY Salary ASC)
-               OVER (PARTITION BY DeptId),
+               WITHIN GROUP (ORDER BY Salary ASC) OVER (PARTITION BY DeptId),
        PctD1 = PERCENTILE_DISC(0.5)
-               WITHIN GROUP (ORDER BY Salary ASC)
-               OVER (PARTITION BY DeptId),
+               WITHIN GROUP (ORDER BY Salary ASC) OVER (PARTITION BY DeptId),
        CD1   = CUME_DIST()
-               OVER (PARTITION BY DeptId
-                         ORDER BY Salary),
+               OVER (PARTITION BY DeptId ORDER BY Salary),
+	 PRANK =  percent_rank() 
+				OVER (PARTITION BY DeptId ORDER BY Salary),
 	   MAX1 = Max(Salary)
                OVER (PARTITION BY DeptId),
-	   Min1 = Min(Salary)
+	   [FIRST] = FIRST_VALUE (Salary)
+			   OVER (PARTITION BY DeptId ORDER BY Salary),
+
+	   [Last] = LAST_VALUE(Salary)
+               OVER (PARTITION BY DeptId ORDER BY Salary ROWS BETWEEN UNBOUNDED PRECEDING
+                               AND UNBOUNDED FOLLOWING),
+	   MIN1 = Min(Salary)
                OVER (PARTITION BY DeptId),
        AVG1  = AVG(Salary)
                OVER (PARTITION BY DeptId),
+	   LAG  = lag(Salary,1,0)
+               OVER (PARTITION BY DeptId ORDER BY Salary),
+	   LEAD = LEAD(Salary,1,0)
+               OVER (PARTITION BY DeptId ORDER BY Salary),
+      
        PctC2 = PERCENTILE_CONT(0.5)
                WITHIN GROUP (ORDER BY Salary ASC)
                OVER (),
