@@ -34,7 +34,19 @@ row_number() OVER (PARTITION BY client_id order by actual_eta-predicted_eta) as 
 from #Temp1
 
 # PERCENTILE_DISC vs PERCENTILE_CONT VS MIN/MAX/AVG
-
+/**
+The PERCENTILE_CONT function calculates a percentile based on a continuous distribution of the column’s value. 
+The PERCENTILE_DISC function returns the column’s value for the smallest CUME_DIST value that is
+greater than or equal to the specified percentile value. For the PERCENTILE_CONT function, 
+the value returned may or may not exist in the column being analyzed; for the PERCENTILE_DISC 
+function the value returned will belong to one of the rows in the partition.
+*/
+/**
+CUME_DIST: calculates the cumulative distribution of a value within a group of values.
+Assuming ascending ordering, the CUME_DIST of a value in row r is defined as the number
+of rows with values less than or equal to that value in row r, divided by the number 
+of rows evaluated in the partition or query result set. CUME_DIST is similar to the PERCENT_RANK function.
+*/
 create table #test (
     EmplId INT PRIMARY KEY CLUSTERED,
     DeptId INT,
