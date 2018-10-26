@@ -1,0 +1,39 @@
+// Following SQL Code is used to update Salary (Double Salary) using Cursor
+
+CREATE TABLE #Test(
+empid   int         NOT NULL,
+empname varchar(10) NOT NULL,
+deptno  int         NULL ,
+jobid   int         ,
+salary decimal(7,2) NOT NULL
+ )
+ GO
+
+INSERT INTO #Test VALUES(1, 'Leo', 400, 30, 3456.00)
+INSERT INTO #Test VALUES(2, 'Ros', 200, 20, 4325.00)
+INSERT INTO #Test VALUES(3, 'Chris', 100, 10, 8952.00)
+INSERT INTO #Test VALUES(4, 'Rob', 400, 30, 1234.00)
+INSERT INTO #Test VALUES(5, 'Linda', 400, 30, 4567.00)
+INSERT INTO #Test VALUES(6, 'Lisa', NULL, 30, 8765.00)
+GO
+select * from #Test
+    DECLARE
+         @empname VARCHAR(40),
+         @salary MONEY,
+         @empid integer
+    DECLARE getemp_curs CURSOR
+        FOR
+           SELECT empid, empname, salary FROM #Test 
+    OPEN getemp_curs
+    FETCH NEXT FROM getemp_curs into @empid, @empname, @salary
+     WHILE @@FETCH_STATUS = 0 BEGIN
+          UPDATE #Test SET salary = @salary*2 WHERE empid = @empid
+     FETCH NEXT FROM getemp_curs into @empid, @empname, @salary
+     END
+     CLOSE getemp_curs
+     DEALLOCATE getemp_curs
+     GO
+
+GO
+
+select * from #Test
