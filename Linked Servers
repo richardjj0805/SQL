@@ -42,4 +42,17 @@ EXECUTE sp_tables_ex 'BAYERPHARMA_AU_METADATA'
  OPENQUERY([LKSVR_SQLDWH01P],'select * from 
  [dw_bayerpharma_au_dbo].[dbo].[dim_act_role]')
  
+ //sp_tables_ex to get all tables in the linked server
  
+ create table #LinkedTables
+ (
+       table_cat varchar(8000),
+      table_schem varchar(8000),
+      table_name varchar(8000),
+      table_type varchar(8000),
+      remarks    varchar(8000)
+	  )
+ insert into #LinkedTables
+EXECUTE sp_tables_ex  @table_server =[LKSVR_SQLDWH02P],@table_CATALOG=[dw_bayerconsumer_au_dbo],@table_schema='dbo'
+select * from #LinkedTables 
+
