@@ -1,4 +1,43 @@
- // OPENQUERY to get the information through Linked Server
+//Create Linked Server for a Excel File
+
+ -- Create initial connection to Excel metadata
+IF EXISTS(SELECT * FROM master.dbo.sysservers WHERE srvname = 'BAYERPHARMA_AU_METADATA')
+BEGIN
+	EXECUTE sp_droplinkedsrvlogin 'BAYERPHARMA_AU_METADATA',NULL
+	EXECUTE sp_dropserver 'BAYERPHARMA_AU_METADATA'
+END
+
+EXECUTE sp_addlinkedserver
+		'BAYERPHARMA_AU_METADATA',
+		'Excel',
+		'Microsoft.ACE.OLEDB.12.0',
+		@Metadata_File,
+		NULL,
+		'Excel 12.0'
+
+IF OBJECT_ID('raw_linked_tables') IS NOT NULL EXECUTE('DROP TABLE raw_linked_tables')
+CREATE TABLE raw_linked_tables
+(
+      table_cat varchar(8000),
+      table_schem varchar(8000),
+      table_name varchar(8000),
+      table_type varchar(8000),
+      remarks    varchar(8000)
+)
+
+EXEC master.dbo.sp_addlinkedsrvlogin	@rmtsrvname = N'BAYERPHARMA_AU_METADATA',
+										@useself = N'false',
+										@rmtuser=NULL,
+										@rmtpassword= NULL
+
+INSERT INTO raw_linked_tables
+EXECUTE sp_tables_ex 'BAYERPHARMA_AU_METADATA'
+
+ 
+
+
+
+// OPENQUERY to get the information through Linked Server
  select * from
  OPENQUERY([LKSVR_SQLDWH01P],'select * from 
  [dw_bayerpharma_au_dbo].[dbo].[dim_act_role]')
