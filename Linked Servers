@@ -1,0 +1,6 @@
+ // OPENQUERY to get the information through Linked Server
+ select * from
+ OPENQUERY([LKSVR_SQLDWH01P],'select * from 
+ [dw_bayerpharma_au_dbo].[dbo].[dim_act_role]')
+ 
+ 
