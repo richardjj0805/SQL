@@ -1,21 +1,33 @@
--- Syntax
+-- SQL Server Syntax  
 
-CREATE [OR REPLACE ] TRIGGER trigger_name  
-{BEFORE | AFTER | INSTEAD OF }  
-{INSERT [OR] | UPDATE [OR] | DELETE}  
-[OF col_name]  
-ON table_name  
-[REFERENCING OLD AS o NEW AS n]  
-[FOR EACH ROW]  
-WHEN (condition)   
-DECLARE 
-   Declaration-statements 
-BEGIN  
-   Executable-statements 
-EXCEPTION 
-   Exception-handling-statements 
-END; 
+-- Trigger on an INSERT, UPDATE, or DELETE statement to a table or view (DML Trigger)  
 
+CREATE [ OR ALTER ] TRIGGER [ schema_name . ]trigger_name   
+ON { table | view }   
+[ WITH <dml_trigger_option> [ ,...n ] ]  
+{ FOR | AFTER | INSTEAD OF }   
+{ [ INSERT ] [ , ] [ UPDATE ] [ , ] [ DELETE ] }   
+[ WITH APPEND ]  
+[ NOT FOR REPLICATION ]   
+AS { sql_statement  [ ; ] [ ,...n ] | EXTERNAL NAME <method specifier [ ; ] > }  
 
---Examples
+<dml_trigger_option> ::=  
+    [ ENCRYPTION ]  
+    [ EXECUTE AS Clause ]  
 
+<method_specifier> ::=  
+    assembly_name.class_name.method_name  
+    
+
+-- Trigger on a CREATE, ALTER, DROP, GRANT, DENY, 
+-- REVOKE or UPDATE statement (DDL Trigger)  
+
+CREATE [ OR ALTER ] TRIGGER trigger_name   
+ON { ALL SERVER | DATABASE }   
+[ WITH <ddl_trigger_option> [ ,...n ] ]  
+{ FOR | AFTER } { event_type | event_group } [ ,...n ]  
+AS { sql_statement  [ ; ] [ ,...n ] | EXTERNAL NAME < method specifier >  [ ; ] }  
+
+<ddl_trigger_option> ::=  
+    [ ENCRYPTION ]  
+    [ EXECUTE AS Clause ]  
