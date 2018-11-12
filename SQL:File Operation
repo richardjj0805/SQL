@@ -11,7 +11,10 @@ declare @cmdline varchar(2000)
 IF Exists (SELECT * FROM #flg WHERE line LIKE 'Bayer Pharma - Development and Support Task Status_%.xlsx')
 BEGIN
 Print 'Moving File'
-set @cmdline ='MOVE /Y "\\SYDSMFTNAS01\MIPORTAL\1_MIPORTAL_DATA\BAYERPHARMA_AU\1_RECEIVED\Bayer Pharma - Development and Support Task Status_*.xlsx" "\\SYDSMFTNAS01\MIPORTAL\1_MIPORTAL_DATA\BAYERPHARMA_AU\WeeklyTask_List"'
+
+set @cmdline ='MOVE /Y "\\SYDSMFTNAS01\MIPORTAL\1_MIPORTAL_DATA\BAYERPHARMA_AU\1_RECEIVED\Bayer Pharma - Development and Support 
+Task Status_*.xlsx" "\\SYDSMFTNAS01\MIPORTAL\1_MIPORTAL_DATA\BAYERPHARMA_AU\WeeklyTask_List"'
+
 EXECUTE master..xp_cmdshell @cmdline
 
 END
