@@ -1,0 +1,37 @@
+DECLARE @tableName nvarchar(100)
+DECLARE @viewTable nvarchar(100)
+DECLARE @columnName nvarchar(100)
+DECLARE @sql nvarchar(max)
+
+DECLARE t cursor for
+select t.name,c.name from sys.tables t join sys.columns c on t.object_Id = c.object_Id 
+where t.name like 'a[_]%'
+and c.name in ('PrimaryEntityID','PrimaryEntityitemID','NetworkEntityitemID')
+
+open t
+fetch next from t into @tableName, @columnName
+
+while @@fetch_status = 0
+begin
+	SET @viewTable = 'V'+ @tableName
+	if not exists 
+	(
+		select 1 from sys.sql_modules sm
+		JOIN sys.objects o ON sm.object_id = o.object_id
+		WHERE
+		o.name like 'V%'
+		AND o.type = 'V'
+		AND o.name not in ('VCustomDLLs','VLayerConfig')
+		AND o.name = @viewTable
+		AND sm.definition like ('%'+ @columnName + '%')
+	)
+
+	begin
+		-- update dTIMS table view to include modified attribute
+		print ('Require adding ' + @columnName + ' into ' + @tableName)		
+	end
+
+	fetch next from t into @tableName, @columnName
+end
+close t
+deallocate t
