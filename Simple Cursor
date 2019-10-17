@@ -1,0 +1,42 @@
+DECLARE @Task_ID float
+DECLARE @CURSOR_Task_ID CURSOR
+
+SET @CURSOR_Task_ID = CURSOR FOR
+                                              select axim_id from task where axim_id in(
+98.0588	,
+103.0588,
+108.0588,
+109.0588,
+110.0588,
+113.0588,
+114.0588,
+25.0588	,
+26.0588	,
+31.0588	,
+44.0588	,
+46.0588	,
+11.0573	,
+7.0110	,
+44.0572	,
+49.0572	,
+169.0572,
+170.0572
+)
+ 
+begin tran  
+OPEN @CURSOR_Task_ID
+
+FETCH NEXT
+       FROM @CURSOR_Task_ID INTO @Task_ID
+
+WHILE @@FETCH_STATUS = 0
+BEGIN
+select *  from  task where axim_id = @Task_ID
+            
+             --PRINT cast(@ASSET_ID as varchar(50)) + ' : ' + @MONTH_INSPECT
+             --set @i = 3
+             FETCH NEXT 
+                    FROM @CURSOR_Task_ID INTO @Task_ID
+END
+CLOSE @CURSOR_Task_ID
+DEALLOCATE @CURSOR_Task_ID
